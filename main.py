@@ -14,7 +14,7 @@ nn = keras.Sequential()
 plotter_model = keras.Sequential()
 
 # Layers
-propagation_layer = layers.RNN(cell=PropagationCell(asset_risk_factor_matrix=asset_risk_factor_matrix), return_sequences=True) # n_batches, n_times, n_assets
+propagation_layer = layers.RNN(cell=PropagationCell(asset_risk_factor_matrix=asset_risk_factor_matrix, x0=x0), return_sequences=True) # n_batches, n_times, n_assets
 
 nn.add(propagation_layer)
 nn.add(layers.Dense(16, activation='relu'))
