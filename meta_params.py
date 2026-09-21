@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+epochs = 5
+
 n_paths = 10
 n_times = 20
 n_stochastic_drivers = 2
