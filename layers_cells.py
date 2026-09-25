@@ -1,49 +1,58 @@
 from keras import Layer
-import tensorflow as tf
-import functions
-from functions import propagate_brownian_motion
+from archive.functions import *
+
+"""
+inputs = simulated asset prices
+state = current absolute allocation weights
+"""
 
 class PropagationCell(Layer):
     # For ref: self.state_size = [n1, n2, 1]  # states = [(batch, n1), (batch, n2), (batch, 1)]
-    def __init__(self, units=32, asset_risk_factor_matrix=None, x0=None, **kwargs):
+    def __init__(self, units=32, rnn_layer_input_dict=None, **kwargs):
         super().__init__()
         self.units = units
-        self.asset_risk_factor_matrix = asset_risk_factor_matrix
-        self.initial_value = 1.
-        self.x0 = x0
-        self.n_assets, self.n_rfs = asset_risk_factor_matrix.shape
-        self.state_size = [self.n_assets, self.n_assets] # reflecting n_assets, n_rfs
+
+        # Init state
+        self.init_asset_vals = rnn_layer_input_dict["INPUT_init_asset_prices"]
+        self.init_rel_alloc = rnn_layer_input_dict["INPUT_init_rel_alloc"]
+        self.init_portfolio_value = rnn_layer_input_dict["INPUT_init_portfolio_value"]
+        self.time_grid = rnn_layer_input_dict["INPUT_time_grid"]
+        self.asset_risk_factor_matrix = rnn_layer_input_dict["INPUT_asset_risk_factor_matrix"]
+        self.init_abs_alloc = rnn_layer_input_dict["INPUT_init_abs_alloc"]
+
+        # Requited
+        self.n_assets, self.n_rfs = self.asset_risk_factor_matrix.shape
+        self.state_size = [self.n_assets, self.n_assets] # relecting current allocation, previous asset prices
         self.output_size = self.state_size[0]
 
         # Weights
         self.w = self.add_weight(shape=(self.n_assets, self.n_assets), trainable=True)
 
+    # This will be a bit dirty, since it's converting np -> tf
     def get_initial_state(self, batch_size=None):
-        alloc0 = tf.ones((batch_size, self.n_assets)) * (self.initial_value / self.n_assets)
-        assets0 = tf.broadcast_to(self.x0, (batch_size, self.n_assets))
+        alloc0 = tf.broadcast_to(self.init_abs_alloc, (batch_size, self.n_assets))
+        assets0 = tf.broadcast_to(tf.convert_to_tensor(self.init_asset_vals) , (batch_size, self.n_assets))
         return [alloc0, assets0]
 
     # Defines the computation
     # states = [std_normals, assets]
     # next asset val =
     def call(self, inputs, states):
-        alloc, assets = states
-        #brownian_drivers = propagate_brownian_motion(inputs, 1., std_normals) # TODO: Change delta_t
+        alloc, prev_asset_prices = states
 
-        # Propagate assets
-        assets = tf.add(assets, tf.matmul(inputs, tf.transpose(self.asset_risk_factor_matrix))) # batch, n_assets + batch, n_rfs x n_rfs, n_assets
+        # Calc returns
+        returns = tf.divide(inputs, prev_asset_prices)
 
-        # Determine portfolio value
-        total_val = tf.tensordot(alloc, tf.ones((self.n_assets, 1)), axes=1)
+        # Simulate asset prices
+        alloc = tf.multiply(alloc, returns)
 
         # Rebalance
-        rel_alloc = self.rebalance(assets, total_val)
-        alloc = total_val * rel_alloc
+        alloc_new = self.rebalance(alloc, inputs)
 
-        return alloc, [alloc, assets] # batch, n_assets; atch, n_assets
+        return alloc_new, [alloc_new, inputs] # batch, n_assets; atch, n_assets
 
     # This takes the assets
-    def rebalance(self, assets, total_val):
-        weights =  tf.nn.softmax(tf.matmul(assets, self.w), axis=-1) # n_batches, n_assets
+    def rebalance(self, alloc, curr_asset_prices):
+        weights =  tf.nn.softmax(tf.matmul(curr_asset_prices, self.w), axis=-1) # n_batches, n_assets
         return weights
 
