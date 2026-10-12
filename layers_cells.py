@@ -43,15 +43,17 @@ class PropagationCell(Layer):
         # Calc returns
         returns = tf.divide(inputs, prev_asset_prices)
 
-        # Simulate asset prices
-        alloc = tf.multiply(alloc, returns)
+        # Get new asset prices & portfolio value
+        alloc = tf.multiply(alloc, returns) # batch x
+        portfolio_value = tf.reduce_sum(alloc, axis=-1, keepdims=True) # batch x
 
         # Rebalance
-        alloc_new = self.rebalance(alloc, inputs)
+        alloc_new_rel = self.rebalance(alloc, inputs) # batch x n_assets
+        alloc_new = tf.multiply(alloc_new_rel, portfolio_value)
 
         return alloc_new, [alloc_new, inputs] # batch, n_assets; atch, n_assets
 
-    # This takes the assets
+    # asset prices -> weights over asset prices
     def rebalance(self, alloc, curr_asset_prices):
         weights =  tf.nn.softmax(tf.matmul(curr_asset_prices, self.w), axis=-1) # n_batches, n_assets
         return weights

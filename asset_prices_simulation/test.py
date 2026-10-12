@@ -1,6 +1,4 @@
-import numpy as np
-import config
-from config import *
+from configs.config import *
 from plot_utils import *
 from simulation import simulate
 
