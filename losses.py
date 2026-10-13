@@ -8,3 +8,6 @@ def max_portfolio_value(y_true, y_pred):
     objective = -tf.reduce_sum(tf.reduce_sum(y_pred[:, -1], 1))
     return objective
 
+def max_portfolio_value(y_true, y_pred):
+    objective = -tf.reduce_sum(tf.reduce_sum(y_pred[:, -1], 1))
+    return objective

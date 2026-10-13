@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_gross_returns_and_new_asset_vals(prev_vale, std_normals, delta_t, vol_matrix, drift = 0.0):
+def get_gross_returns_and_new_asset_vals(prev_vale, std_normals, delta_t, vol_matrix, drift = 0.05):
     drift_inc = np.array(prev_vale) * drift * delta_t # S_t * r * dt
 
     normals = std_normals * np.sqrt(delta_t) # sigma * sqrt(dt)

@@ -54,7 +54,7 @@ class PropagationCell(Layer):
         return alloc_new, [alloc_new, inputs] # batch, n_assets; atch, n_assets
 
     # asset prices -> weights over asset prices
-    def rebalance(self, alloc, curr_asset_prices):
+    def rebalance(self, allocs, curr_asset_prices):
         weights =  tf.nn.softmax(tf.matmul(curr_asset_prices, self.w), axis=-1) # n_batches, n_assets
         return weights
 
