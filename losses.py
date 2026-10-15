@@ -1,12 +1,14 @@
+import numpy as np
 import tensorflow as tf
+from utils import *
 
 '''
 y_true = batch_size x time_steps x n_assets
 '''
 
 def max_portfolio_value(y_true, y_pred):
-    objective = -tf.reduce_sum(tf.reduce_sum(y_pred[:, -1], 1))
-    return objective
+    objective = tf.reduce_sum(tf.reduce_sum(y_pred[:, -1], 1))
+    return -objective
 
 def max_sharpe(y_true, y_pred):
     pv = tf.reduce_sum(y_pred, axis=-1)                  # (batch, time)
@@ -15,3 +17,13 @@ def max_sharpe(y_true, y_pred):
     std = tf.math.reduce_std(returns, axis=-1)
     sharpe = mean / (std + 1e-8)
     return -sharpe                                       # minimize -Sharpe
+
+def merton_fractions(y_true, y_pred, gamma=0.5):
+    w = tf.reduce_sum(y_pred[:, -1, :], axis=-1)
+    w = tf.maximum(w, 1e-8) 
+    if gamma == 1.0:
+        u = tf.math.log(w)
+    else:
+        u = tf.pow(w, 1.0 - gamma) / (1.0 - gamma)
+    return -u
+
