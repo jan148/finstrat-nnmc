@@ -1,10 +1,12 @@
 from collections import defaultdict
 import numpy as np
 from configs.config import n_time_steps
+from losses import merton_fractions
 
 class MertonFractionsConfig:
     # Train params
-    epochs = 50
+    epochs = 1
+    loss_func = merton_fractions
 
     # Init state
     init_asset_vals = [1., 1., 1., 1.]
@@ -13,30 +15,28 @@ class MertonFractionsConfig:
     init_value = 1
     simulation_end = 1
 
+    # MC simulation params
+    n_paths = 200000
+    n_time_steps = 99
+    time_grid = np.linspace(0, simulation_end, n_time_steps + 1)
+    n_ts_adjusted = n_time_steps
+    time_grid_adjusted = time_grid[0:-1]
+
     init_abs_alloc = np.multiply(init_rel_alloc, init_asset_vals) * init_value
     init_portfolio_value = np.sum(init_abs_alloc)
 
     # Model params
     r = 0.02
-    drifts_const = np.array([r, r + 0.2, r + 0.4, r - 5.6])
-    drifts = np.broadcast_to(drifts_const,shape=(n_time_steps - 1, n_assets))
-    factor_loading_matrix = np.array([[0, 0, 0, 0],
-                                      [0, 0.05, 0, 0],
-                                      [0, 0, 0.3, 0],
-                                      [0, 0, 0, 0.5]])
+    drifts_const = np.array([r, r + 0.2, r + 0.4, r + 0.6])
+    drifts = np.broadcast_to(drifts_const,shape=(n_time_steps, n_assets))
+    volas = np.array([0.0, 0.2, 0.3, 0.9])
     correlation_matrix = np.array([[1, 0, 0, 0],
                                    [0, 1, 0, 0],
                                    [0, 0, 1, 0],
                                    [0, 0, 0, 1]])
+    factor_loading_matrix =  np.diag(volas) @ np.linalg.cholesky(correlation_matrix)
     n_stochastic_drivers = factor_loading_matrix.shape[1]
     gamma = 0.5
-
-    # MC simulation params
-    n_paths = 20
-    n_time_steps = 10
-    time_grid = np.linspace(0, simulation_end, n_time_steps)
-    n_ts_adjusted = n_time_steps - 1
-    time_grid_adjusted = time_grid [0:-1]
 
     # ------------ Other objects ------------
     # For rnn cell

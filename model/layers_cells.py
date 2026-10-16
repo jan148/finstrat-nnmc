@@ -1,3 +1,4 @@
+import keras
 from keras import Layer
 from archive.functions import *
 
@@ -26,12 +27,22 @@ class PropagationCell(Layer):
         self.output_size = self.state_size[0]
 
         # Weights
-        self.w = self.add_weight(shape=(self.n_assets, self.n_assets), trainable=True)
+        #self.w = self.add_weight(shape=(self.n_assets, self.n_assets), trainable=True)
+        self.exp = 5
+        self.inner_model = keras.Sequential([
+            keras.Input(shape=(self.n_assets,)),
+            keras.layers.Dense(2**5, activation="relu"),
+            keras.layers.Dense(2**5, activation="relu"),
+            keras.layers.Dense(2**5, activation="relu"),
+            #keras.layers.Dense(64, activation="relu"),
+            #keras.layers.Dense(64, activation="relu"),
+            keras.layers.Dense(self.n_assets)
+        ])
 
     # This will be a bit dirty, since it's converting np -> tf
     def get_initial_state(self, batch_size=None):
-        alloc0 = tf.broadcast_to(self.init_abs_alloc, (batch_size, self.n_assets))
-        assets0 = tf.broadcast_to(tf.convert_to_tensor(self.init_asset_vals) , (batch_size, self.n_assets))
+        alloc0 = tf.broadcast_to(tf.cast(self.init_abs_alloc, self.compute_dtype), (batch_size, self.n_assets))
+        assets0 = tf.broadcast_to(tf.cast(self.init_asset_vals, self.compute_dtype), (batch_size, self.n_assets))
         return [alloc0, assets0]
 
     # Defines the computation
@@ -55,6 +66,8 @@ class PropagationCell(Layer):
 
     # asset prices -> weights over asset prices
     def rebalance(self, allocs, curr_asset_prices):
-        weights =  tf.nn.softmax(tf.matmul(curr_asset_prices, self.w), axis=-1) # n_batches, n_assets
-        return weights
+        #raw = tf.matmul(curr_asset_prices, self.w)  # (batch, A)
+        raw = self.inner_model(allocs)
+        total = tf.reduce_sum(raw, axis=-1, keepdims=True)  # (batch, 1)
+        return raw / total  # (batch, A), rows sum to 1
 

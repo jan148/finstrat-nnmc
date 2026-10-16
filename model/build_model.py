@@ -17,8 +17,6 @@ plotter_model.add(propagation_layer)
 nn.summary()
 #plotter_model.summary('plotter.keras')
 
-nn.compile(optimizer='adam', loss=merton_fractions)
-
 # Save
 # nn.save('model.keras')
 # nn = keras.models.load_model("model.h5")

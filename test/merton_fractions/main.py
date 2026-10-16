@@ -12,8 +12,10 @@ sim_asset_prices_tf = tf.convert_to_tensor(asset_prices_sim)
 train_asset_prices, test_asset_prices = train_validation_split(sim_asset_prices_tf, 0.3)
 
 # ------------ 2. Compile model & train model & evaluate ------------
-# Compile
 from model.build_model import *
+
+# Compile
+nn.compile(optimizer='adam', loss=MertonFractionsConfig.loss_func)
 
 # Fit
 nn.fit(train_asset_prices, tf.zeros([tf.shape(train_asset_prices)[0], n_ts_adjusted, n_assets]), epochs=epochs)

@@ -13,14 +13,8 @@ def get_gross_returns_and_new_asset_vals(prev_vale, std_normals, delta_t, vol_ma
 
     return returns, asset_prices_new
 
-def simulate(init_vals, vol_matrix, time_grid, n_paths, correlation_matrix=None, drifts=None):
+def simulate(init_vals, vol_matrix, time_grid, n_paths, drifts=None):
     std_normals = np.random.normal(loc=0., scale=1., size=(n_paths, len(time_grid) - 1, vol_matrix.shape[1]))
-    if correlation_matrix is None:
-        id_matrix = np.identity(vol_matrix.shape[1])
-        correlation_matrix = id_matrix
-    sqrt_corr_mat = tf.linalg.sqrtm(tf.convert_to_tensor(correlation_matrix, dtype=tf.float32)).numpy()
-    correlated_std_normals = std_normals @ sqrt_corr_mat.T # Last dim: std-normal
-
     time_steps = np.diff(time_grid)
     paths_prices = []
     for p in range(n_paths):
@@ -28,7 +22,7 @@ def simulate(init_vals, vol_matrix, time_grid, n_paths, correlation_matrix=None,
         path.append(init_vals)
         for idx, time_step in enumerate(time_steps):
             drift = drifts[idx]
-            returns, asset_prices_new = get_gross_returns_and_new_asset_vals(path[-1], correlated_std_normals[p][idx], time_step, vol_matrix, drift)
+            returns, asset_prices_new = get_gross_returns_and_new_asset_vals(path[-1], std_normals[p][idx], time_step, vol_matrix, drift)
             path.append(asset_prices_new)
         paths_prices.append(path)
 
@@ -40,8 +34,7 @@ def simulate_w_config(config):
     vol_matrix= config.factor_loading_matrix
     time_grid = config.time_grid
     n_paths = config.n_paths
-    correlation_matrix = config.correlation_matrix
     drifts = config.drifts
 
-    paths_prices_np = simulate(init_vals, vol_matrix, time_grid, n_paths, correlation_matrix, drifts)
+    paths_prices_np = simulate(init_vals, vol_matrix, time_grid, n_paths, drifts)
     return paths_prices_np

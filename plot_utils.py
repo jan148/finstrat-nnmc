@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from utils import *
 
-def plot_paths_new(tensor, time_grid, n_plot=None):
+def plot_paths_new(tensor_in, time_grid, n_plot=None):
+    tensor = tensor_in if n_plot is None else tensor_in[:n_plot]
+
     n_paths = tensor.shape[0]
     n_series = tensor.shape[-1]
 
