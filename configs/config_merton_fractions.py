@@ -5,7 +5,7 @@ from losses import merton_fractions
 
 class MertonFractionsConfig:
     # Train params
-    epochs = 1
+    epochs = 5
     loss_func = merton_fractions
 
     # Init state
@@ -16,7 +16,7 @@ class MertonFractionsConfig:
     simulation_end = 1
 
     # MC simulation params
-    n_paths = 200000
+    n_paths = 50000
     n_time_steps = 99
     time_grid = np.linspace(0, simulation_end, n_time_steps + 1)
     n_ts_adjusted = n_time_steps
