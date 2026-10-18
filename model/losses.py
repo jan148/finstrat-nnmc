@@ -18,14 +18,15 @@ def max_sharpe(y_true, y_pred):
     sharpe = mean / (std + 1e-8)
     return -sharpe                                       # minimize -Sharpe
 
-def merton_fractions(y_true, y_pred, gamma=0.5, lam=0.8):
-    w = tf.reduce_sum(y_pred[:, -1, :], axis=-1)
-    y_pred_weights = y_pred / tf.reduce_sum(y_pred, axis=-1, keepdims=True)
-    w = tf.maximum(w, 1e-8) 
-    if gamma == 1.0:
-        u = tf.math.log(w)
-    else:
-        u = tf.pow(w, 1.0 - gamma) / (1.0 - gamma)
-    u = u - lam * tf.reduce_max(tf.math.reduce_variance(y_pred_weights, axis=1))
-    return -u
-
+def get_merton_loss(gamma, lam):
+    def merton_fractions(y_true, y_pred):
+        w_exp = tf.maximum(tf.reduce_sum(y_pred, axis=-1, keepdims=True), 1e-8)
+        w = w_exp[:, -1, 0]
+        y_pred_weights = y_pred / w_exp
+        if gamma == 1.0:
+            u = tf.math.log(w)
+        else:
+            u = tf.pow(w, 1.0 - gamma) / (1.0 - gamma)
+        u = u - lam * tf.reduce_mean(tf.math.reduce_variance(y_pred_weights, axis=1))
+        return -u
+    return merton_fractions

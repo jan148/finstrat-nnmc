@@ -1,6 +1,9 @@
 import keras
 from keras import Layer
+from keras.src.callbacks import Callback
+
 from archive.functions import *
+from configs.config import init_asset_vals
 
 """
 inputs = simulated asset prices
@@ -8,36 +11,25 @@ state = current absolute allocation weights
 """
 
 class PropagationCell(Layer):
-    # For ref: self.state_size = [n1, n2, 1]  # states = [(batch, n1), (batch, n2), (batch, 1)]
-    def __init__(self, units=32, rnn_layer_input_dict=None, **kwargs):
+    def __init__(self, config, **kwargs):
         super().__init__()
-        self.units = units
+        #self.units = units
 
         # Init state
-        self.init_asset_vals = rnn_layer_input_dict["INPUT_init_asset_prices"]
-        self.init_rel_alloc = rnn_layer_input_dict["INPUT_init_rel_alloc"]
-        self.init_portfolio_value = rnn_layer_input_dict["INPUT_init_portfolio_value"]
-        self.time_grid = rnn_layer_input_dict["INPUT_time_grid"]
-        self.asset_risk_factor_matrix = rnn_layer_input_dict["INPUT_asset_risk_factor_matrix"]
-        self.init_abs_alloc = rnn_layer_input_dict["INPUT_init_abs_alloc"]
+        self.init_asset_vals = config.init_asset_vals
+        self.init_abs_alloc = config.init_abs_alloc
 
         # Requited
-        self.n_assets, self.n_rfs = self.asset_risk_factor_matrix.shape
+        self.n_assets = self.n_rfs = len(self.init_asset_vals)
         self.state_size = [self.n_assets, self.n_assets] # relecting current allocation, previous asset prices
         self.output_size = self.state_size[0]
 
-        # Weights
-        #self.w = self.add_weight(shape=(self.n_assets, self.n_assets), trainable=True)
-        self.exp = 5
-        self.inner_model = keras.Sequential([
-            keras.Input(shape=(self.n_assets,)),
-            keras.layers.Dense(2**5, activation="relu"),
-            keras.layers.Dense(2**5, activation="relu"),
-            keras.layers.Dense(2**5, activation="relu"),
-            #keras.layers.Dense(64, activation="relu"),
-            #keras.layers.Dense(64, activation="relu"),
-            keras.layers.Dense(self.n_assets)
-        ])
+        # Create network
+        self.inner_model = keras.Sequential()
+        self.inner_model.add(keras.Input(shape=(self.n_assets,)))
+        for i in range(config.n_hidden_layers):
+            self.inner_model.add(keras.layers.Dense(config.n_units_per_hidden_layer, kernel_initializer="zeros"))
+        self.inner_model.add(keras.layers.Dense(self.n_assets, kernel_initializer="zeros"))
 
     # This will be a bit dirty, since it's converting np -> tf
     def get_initial_state(self, batch_size=None):
@@ -57,17 +49,23 @@ class PropagationCell(Layer):
         # Get new asset prices & portfolio value
         alloc = tf.multiply(alloc, returns) # batch x
         portfolio_value = tf.reduce_sum(alloc, axis=-1, keepdims=True) # batch x
+        alloc_rel = alloc / portfolio_value
 
         # Rebalance
-        alloc_new_rel = self.rebalance(alloc, inputs) # batch x n_assets
+        alloc_new_rel = self.rebalance(alloc_rel, inputs) # batch x n_assets
         alloc_new = tf.multiply(alloc_new_rel, portfolio_value)
 
         return alloc_new, [alloc_new, inputs] # batch, n_assets; atch, n_assets
 
-    # asset prices -> weights over asset prices
-    def rebalance(self, allocs, curr_asset_prices):
-        #raw = tf.matmul(curr_asset_prices, self.w)  # (batch, A)
-        raw = self.inner_model(allocs)
-        total = tf.reduce_sum(raw, axis=-1, keepdims=True)  # (batch, 1)
-        return raw / total  # (batch, A), rows sum to 1
+    # Asset prices -> weights over asset prices
+    def rebalance(self, alloc_rel, curr_asset_prices):
+        raw = self.inner_model(alloc_rel)
+        risky = raw[:, 1:]  # risky weights, unconstrained
+        bank = 1.0 - tf.reduce_sum(risky, axis=-1, keepdims=True)
+        return tf.concat([bank, risky], axis=-1)  # rows sum to 1
 
+class GetWeights(keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        weights = self.model.get_weights()
+        for v in self.model.trainable_weights:
+            print(f"\n{v.path}, {v.numpy()}")

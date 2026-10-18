@@ -31,16 +31,3 @@ n_time_steps = 10
 time_grid = np.linspace(0, simulation_end, n_time_steps)
 n_ts_adjusted = n_time_steps - 1
 time_grid_adjusted = time_grid [0:-1]
-
-# ------------ Other objects ------------
-
-# For rnn cell
-rnn_layer_input_dict = defaultdict(list)
-rnn_layer_input_dict["INPUT_init_asset_prices"] = init_asset_vals
-rnn_layer_input_dict["INPUT_init_rel_alloc"] = init_rel_alloc
-rnn_layer_input_dict["INPUT_init_value"] = init_value
-rnn_layer_input_dict["INPUT_init_portfolio_value"] = init_portfolio_value
-rnn_layer_input_dict["INPUT_time_grid"] = time_grid
-rnn_layer_input_dict["INPUT_asset_risk_factor_matrix"] = vol_matrix
-rnn_layer_input_dict["INPUT_init_abs_alloc"] = init_abs_alloc
-
