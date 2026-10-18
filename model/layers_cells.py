@@ -1,9 +1,7 @@
 import keras
 from keras import Layer
 from keras.src.callbacks import Callback
-
 from archive.functions import *
-from configs.config import init_asset_vals
 
 """
 inputs = simulated asset prices

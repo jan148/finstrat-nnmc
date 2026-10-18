@@ -6,8 +6,8 @@ from utils import *
 def create_summary_stats(sim_paths):
     pvs = np.sum(sim_paths, axis=-1)
     vars = np.var(pvs, axis=0)
-    q_5s = np.percentile(pvs, 5, axis=-1)
-    q_95s = np.percentile(pvs, 95, axis=-1)
+    q_5s = np.percentile(pvs, 5, axis=0)
+    q_95s = np.percentile(pvs, 95, axis=0)
     rel_weights = np.apply_along_axis(convert_to_weights, -1, sim_paths)
 
     results_dict = defaultdict(list)
@@ -27,26 +27,26 @@ def create_results_dashboard(sim_paths, price_paths, config,  n_paths_in):
     pvs, vars, rel_weights = res_dict["PV"], res_dict["Variance"], res_dict["Relative Weights"]
 
     fig, axs = plt.subplots(nrows=3, ncols=2)
-    fig.suptitle(f"Results for {config.__name__}")
+    fig.suptitle(f"Results for {type(config).__name__}")
     axs[0, 0].set(title="Asset prices", ylabel="Price")
     axs[1, 0].set(title="Portfolio value per path", ylabel="Portfolio value")
     axs[1, 1].set(title="Portfolio value variance", ylabel="Variance")
     axs[2, 0].set(title="Absolute allocations", xlabel="Time", ylabel="Allocation")
     axs[2, 1].set(title="Relative weights", xlabel="Time", ylabel="Weight")
 
-    asset_colors = plt.cm.tab10(np.arange(n_assets))
+    asset_colors = plt.cm.tab10(np.arange(config.n_assets))
     path_colors = plt.cm.viridis(np.linspace(0, 1, n_paths))
     axs[1, 1].plot(time_grid, vars, label='Simulation', color='black') # Variance
     axs[1, 0].plot(time_grid, np.mean(pvs, axis=0), color='black', linestyle='dashdot') # Mean
     for p in range(n_paths):
         axs[1, 0].plot(time_grid, pvs[p], color=path_colors[p])
-        for n in range(n_assets):
+        for n in range(config.n_assets):
             color = asset_colors[n]
             axs[0, 0].plot(time_grid, price_paths[p, :, n], color=color, alpha=0.5)
             axs[2, 0].plot(time_grid, sim_paths[p, :, n], color=color, alpha=0.5)
             axs[2, 1].plot(time_grid, rel_weights[p, :, n], color=color, alpha=0.5)
 
-    return fig, axs
+    return res_dict, fig, axs
 
 # -------- Deprecated --------
 def plot_paths_new(tensor_in, time_grid, n_plot=None):

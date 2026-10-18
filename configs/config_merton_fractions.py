@@ -1,41 +1,43 @@
 from collections import defaultdict
 import numpy as np
+from configs.config import BaseConfig
 from model.losses import get_merton_loss
 
-class MertonFractionsConfig:
-    # Train params
-    epochs = 10
-    n_hidden_layers = 0
-    n_units_per_hidden_layer = 2**3
-    gamma = 0.2
-    lam = 0
-    loss_func = get_merton_loss(gamma, lam)
+class MertonFractionsConfig(BaseConfig):
+    def __init__(self):
+        super().__init__()
 
-    # Init state
-    init_asset_vals = [1., 2., 3., 4.]
-    n_assets = len(init_asset_vals)
-    init_rel_alloc = np.full(n_assets, 1 / n_assets)
-    init_value = 1
-    simulation_end = 1
+        # Model & train params
+        self.epochs = 10
+        self.n_hidden_layers = 0
+        self.n_units_per_hidden_layer = 2**3
+        self.gamma = 0.2
+        self.lam = 0
+        self.loss_func = get_merton_loss(self.gamma, self.lam)
 
-    # MC simulation params
-    n_paths = 10000
-    n_time_steps = 252 * simulation_end
-    time_grid = np.linspace(0, simulation_end, n_time_steps + 1)
-    n_ts_adjusted = n_time_steps
-    time_grid_adjusted = time_grid[0:-1]
+        # Init state
+        self.init_asset_vals = [1., 2., 3., 4.]
+        self.n_assets = len(self.init_asset_vals)
+        self.init_rel_alloc = np.full(self.n_assets, 1 / self.n_assets)
+        self.init_value = 1
 
-    init_abs_alloc = np.multiply(init_rel_alloc, init_asset_vals) * init_value
-    init_portfolio_value = np.sum(init_abs_alloc)
+        self.init_abs_alloc = np.multiply(self.init_rel_alloc, self.init_asset_vals) * self.init_value
+        self.init_portfolio_value = np.sum(self.init_abs_alloc)
 
-    # Model params
-    r = 0.02
-    drifts_const = np.array([r, r + 0.01, r + 0.04, r + 0.06])
-    drifts = np.broadcast_to(drifts_const, shape=(n_time_steps, n_assets))
-    volas = np.array([0.0, 0.2, 0.3, 0.5])
-    correlation_matrix = np.array([[1, 0, 0, 0],
-                                   [0, 1, 0, 0],
-                                   [0, 0, 1, 0],
-                                   [0, 0, 0, 1]])
-    factor_loading_matrix =  np.diag(volas) @ np.linalg.cholesky(correlation_matrix) # Cholesky decomposition of variance matrix
-    n_stochastic_drivers = factor_loading_matrix.shape[1]
+        # MC simulation params
+        self.simulation_end = 1
+        self.n_paths = 10000
+        self.n_time_steps = 251 * self.simulation_end
+        self.time_grid = np.linspace(0, self.simulation_end, self.n_time_steps + 1)
+
+        # Model params
+        self.r = 0.02
+        self.drifts_const = self.r + np.array([0, 0.01,  0.04,  0.06])
+        self.drifts = np.broadcast_to(self.drifts_const, shape=(self.n_time_steps, self.n_assets))
+        self.volas = np.array([0.0, 0.2, 0.3, 0.5])
+        self.correlation_matrix = np.array([[1, 0, 0, 0],
+                                       [0, 1, 0, 0],
+                                       [0, 0, 1, 0],
+                                       [0, 0, 0, 1]])
+        self.factor_loading_matrix =  np.diag(self.volas) @ np.linalg.cholesky(self.correlation_matrix) # Cholesky decomposition of variance matrix
+        self.n_stochastic_drivers = self.factor_loading_matrix.shape[1]
