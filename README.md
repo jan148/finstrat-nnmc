@@ -40,7 +40,7 @@ For a demonstration, see [Merton fractions example](test/merton_fractions).
 
 ## Limitations
 
-The simulated processes are multidimensional GBM. This will be extended in the future to accomodate other stochastic processes.
+The simulated processes are multidimensional GBMs. This will be extended in the future to accomodate other stochastic processes.
 
 ## Methodology
 
