@@ -1,7 +1,7 @@
 # FinStratNNMC
 
 This project provides a facility to simulate MC-paths and 
-learn strategies that optimize a given objective.
+learn strategies to optimize a given objective.
 
 ## Overview
 
