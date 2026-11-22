@@ -36,7 +36,7 @@ test_predictions = nn.predict(test_asset_prices)
 
 ## Example
 
-For a demonstration, see [Merton fractions example](test/merton_fractions). 
+For a demonstration, see [Merton fractions example](test/merton_fractions) and, in particular, the [output dashboard](test/merton_fractions/results.png).
 
 ## Limitations
 
