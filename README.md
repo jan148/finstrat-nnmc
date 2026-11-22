@@ -3,17 +3,11 @@
 This project provides a facility to simulate MC-paths and 
 learn strategies to optimize a given objective.
 
-## Overview
-
-- **Goal:** Replicate an index/asset performance with other as index/assets
-- **Method:** Least-squares weight fitting with periodic rebalancing
-- **Output:** Simulated returns
-
 ## Usage
 
-1. Create a Config with extends the [base config](configs/config.py)
+1. Create a Config with extends the [base config](configs/config.py).
 
-2. Simulate the assets, build and train the neural network 
+2. Simulate the assets, build and train the neural network.
 
 ```python
 # ------------ 1. Load simulated test asset prices ------------
