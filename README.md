@@ -36,7 +36,7 @@ test_predictions = nn.predict(test_asset_prices)
 
 ## Example
 
-For a demonstration, see [Merton fractions example](test/merton_fractions) and, in particular, the [output dashboard](test/merton_fractions/results.png).
+We tested the setup by replicating the analytical solution to Merton's optimal control problem here: [Merton fractions example](test/merton_fractions). In "Relative weights" in [output dashboard](test/merton_fractions/results.png), the horizontal lines correspond to the analytical solution of the multi-dimensional Merton problem, whereas each other line correspond to the learned weight of one of the four assets of one MC-path.
 
 ## Limitations
 
